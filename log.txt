@@ -1,0 +1,17 @@
+ >> A total of 2 images
+ >> -------img No.1---------->>
+>> VEHICLE DETECTED car_front 0.998496 (605, 345, 878, 914)
+>> VEHICLE DETECTED car_front 0.922554 (392, 6, 524, 253)
+>> OBJECT DETECTED blue_lic 0.995657 (363, 764, 199, 67)
+>> OBJECT DETECTED annual_mark 0.886214 (164, 171, 66, 96)
+>> OBJECT DETECTED blue_lic 0.997958 (188, 140, 132, 46)
+[['car_front', 0.9984957, 605.4574, 345.89713, 878.01318, 914.89819], ['car_front', 0.92255437, 392.47824, 6.3468781, 524.63416, 253.75005]]
+[['blue_lic', 0.99565685, 969.03973, 1110.4113, 199.25439, 67.263794], ['annual_mark', 0.88621396, 770.33618, 517.71411, 66.530823, 96.368744], ['blue_lic', 0.99795771, 580.48608, 146.93217, 132.63342, 46.716675]]
+ >> 2 vehicles and 3 accessories are detected in 000001.jpg
+ >> -------img No.2---------->>
+>> VEHICLE DETECTED car_front 0.970681 (311, 611, 818, 570)
+>> OBJECT DETECTED fastened_seatbelt 0.991110 (442, 161, 217, 150)
+>> OBJECT DETECTED annual_mark 0.932170 (163, 145, 72, 99)
+[['car_front', 0.97068149, 311.40701, 611.68848, 818.50232, 570.99817]]
+[['fastened_seatbelt', 0.99110961, 753.9682, 773.51306, 217.56259, 150.75613], ['annual_mark', 0.93217009, 475.12122, 757.51031, 72.863586, 99.714294]]
+ >> 1 vehicles and 2 accessories are detected in 000002.jpg
