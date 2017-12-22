@@ -2,7 +2,7 @@
 # @Author: gehuama
 # @Date:   2017-12-18 15:22:11
 # @Last Modified by:   gehuama
-# @Last Modified time: 2017-12-21 18:11:31
+# @Last Modified time: 2017-12-22 11:40:51
 
 import os, sys
 import numpy as np
@@ -30,6 +30,7 @@ def parse_results(results):
 		return 0, 0, 0
 
 def get_img_size(img_path):
+	print img_path
 	if os.path.isfile(img_path):
 		return Image.open(img_path).size
 	else:
@@ -50,9 +51,9 @@ def gen_xml(xml_path, content, obj_num, file_header):
 	xml.write(file_end)
 	xml.close()
 
-def main(results, img_path, img_name):
+def main(results, img_path, img_name, save_xml_path):
 	size = get_img_size(img_path + img_name)
 	file_header = '<annotation verified="no">\n\t<folder>2</folder>\n\t<filename>%s</filename>\n\t<path>anything</path>\n\t<source>\n\t\t<database>Unknown</database>\n\t</source>\n\t<size>\n\t\t<width>%d</width>\n\t\t<height>%d</height>\n\t\t<depth>3</depth>\n\t</size>\n\t<segmented>0</segmented>' % (img_path + img_name, size[0], size[1])
 	flag, content, obj_num = parse_results(results)
 	if flag:
-		gen_xml('./result_XML/{}.xml'.format(img_name[:-4]), content, obj_num, file_header)
+		gen_xml('./{}/{}.xml'.format(save_xml_path, img_name[:-4]), content, obj_num, file_header)

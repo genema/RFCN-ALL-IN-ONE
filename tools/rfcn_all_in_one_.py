@@ -2,7 +2,7 @@
 # @Author: gehuama
 # @Date:   2017-12-21 14:50:30
 # @Last Modified by:   gehuama
-# @Last Modified time: 2017-12-21 18:55:30
+# @Last Modified time: 2017-12-22 11:44:18
 
 import sys
 import _init_paths
@@ -19,6 +19,7 @@ import caffe, os, cv2
 import argparse
 from PIL import Image, ImageFont, ImageDraw
 from Save_Res2xml import main as save2xml
+from datetime import datetime
 
 FONT = './lib/simhei.ttf'
 FONT_SIZE = 35
@@ -79,7 +80,7 @@ def vis_detections(im, class_name, dets, image_name, results, thresh):
                                                             bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1])
 
 
-def vis_detections2(im, class_name, dets, image_name, results, thresh, t_coord):
+def vis_detections2(im, class_name, dets, image_name, results, temp, thresh, t_coord):
     inds = np.where(dets[:, -1] >= thresh)[0]
     # print inds
     if len(inds) == 0:
@@ -88,6 +89,10 @@ def vis_detections2(im, class_name, dets, image_name, results, thresh, t_coord):
     for i in inds:
         bbox = dets[i, :4]
         score = dets[i, -1]
+        if class_name in ('call_phone', 'no_seatbelt', 'tissue_box', 'hanging_drop'):
+            temp.append([CLASSES_2.index(class_name), score,
+                        bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1]])
+
         results.append([CLASSES_2.index(class_name), score, 
                         bbox[0]+t_coord[0], bbox[1]+t_coord[1], bbox[2]-bbox[0], bbox[3]-bbox[1]])
         print u'>> OBJECT DETECTED %s %f (%d, %d, %d, %d)' % (class_name, score, 
@@ -121,7 +126,7 @@ def demo2(net, image_name, results, vehi_info, thresh):
     im = cv2.imread(im_file)
     # print vehi_info
     for i in range(len(vehi_info)):
-        #print [vehi_info[i][2], vehi_info[i][2]+vehi_info[i][4], vehi_info[i][3], vehi_info[i][3]+vehi_info[i][5]]
+        temp = []
         left  = int(vehi_info[i][2])
         right = int(vehi_info[i][2]+vehi_info[i][4])
         top   = int(vehi_info[i][3])
@@ -141,8 +146,17 @@ def demo2(net, image_name, results, vehi_info, thresh):
             dets       = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32)
             keep       = nms(dets, NMS_THRESH)
             dets       = dets[keep, :]
-            vis_detections2(im, cls_name, dets, image_name, results, thresh, t_coord)
+            vis_detections2(im, cls_name, dets, image_name, results, temp, thresh, t_coord)
         # print results
+        if len(temp):
+            save_prefix = datetime.now().strftime('%H%M%S')
+            # print sos.path.join('./cropped/img/', save_prefix, '.jpg')
+            cv2.imwrite(os.path.join('./cropped/img/', save_prefix+'.jpg'), vehi_im)
+            for i in range(len(temp)):
+                temp[i][0] = CLASSES_2[temp[i][0]]
+            save2xml(temp, './cropped/img/', save_prefix+'.jpg', 'cropped/xml')
+            
+
     if not len(results):
         return 1
     else:
@@ -219,6 +233,13 @@ def prep():
         os.mkdir(RESULTS_PATH)
     if not os.path.isdir('./result_XML'):
         os.mkdir('./result_XML')
+    if not os.path.isdir('./cropped'):
+        os.mkdir('./cropped')
+    if not os.path.isdir('./cropped/img'):
+        os.mkdir('./cropped/img')
+    if not os.path.isdir('./cropped/xml'):
+        os.mkdir('./cropped/xml')    
+
     cfg.TEST.HAS_RPN = True  # Use RPN for proposals
 
 
@@ -241,40 +262,39 @@ if __name__ == '__main__':
     
     im = 128 * np.ones((600, 1000, 3), dtype=np.uint8)
 
-    #im_names = os.listdir(IMG_PATH)
-    im_names = ['000001.jpg', '000002.jpg']
+    im_names = os.listdir(IMG_PATH)
+    #im_names = ['000001.jpg', '000002.jpg']
     print ' >> A total of %d images' % len(im_names)
     im_count = 0
     for im_name in im_names:
-        #net = init_model(caffemodel, prototxt, GPU_1)
-        for i in xrange(2):
-            _, _= im_detect(net, im)
-
-        im_count += 1
-        print ' >> -------img No.%d---------->>' % (im_count)
-        vehi_info = rfcn_run(net, im_name, args.thresh1)
-        if len(vehi_info):
-            
-            alt_gpu(GPU_2, 0)
-            net2 = caffe.Net(prototxt2, caffemodel2, caffe.TEST)
-            
-            # net2 = init_model(caffemodel2, prototxt2, GPU_2) 
+        chk = cv2.imread(IMG_PATH + im_name)
+        if not chk is None:
             for i in xrange(2):
-                _, _= im_detect(net2, im)
-            # print vehi_info
-            obj_info = rfcn_run_2(net2, im_name, vehi_info, args.thresh2)
-            alt_gpu(GPU_1, 0)
-            print vehi_info
-            print obj_info
+                _, _= im_detect(net, im)
 
-            if len(obj_info) and len(vehi_info):
-                results = np.vstack((vehi_info, obj_info))
-            elif not len(obj_info) and len(vehi_info):
-                results = vehi_info
-            save2xml(results, IMG_PATH, im_name)
-            print ' >> %d vehicles and %d accessories are detected in %s' % (len(vehi_info), len(obj_info), im_name) 
-        else:
-            alt_gpu(GPU_1, 1)
-            continue
+            im_count += 1
+            print ' >> -------img No.%d---------->>' % (im_count)
+            vehi_info = rfcn_run(net, im_name, args.thresh1)
+            if len(vehi_info):
+                
+                alt_gpu(GPU_2, 0)
+                net2 = caffe.Net(prototxt2, caffemodel2, caffe.TEST)
+                
+                for i in xrange(2):
+                    _, _= im_detect(net2, im)
+                obj_info = rfcn_run_2(net2, im_name, vehi_info, args.thresh2)
+                alt_gpu(GPU_1, 0)
+                print vehi_info
+                print obj_info
+
+                if len(obj_info) and len(vehi_info):
+                    results = np.vstack((vehi_info, obj_info))
+                elif not len(obj_info) and len(vehi_info):
+                    results = vehi_info
+                save2xml(results, IMG_PATH, im_name, 'result_XML')
+                print ' >> %d vehicles and %d accessories are detected in %s' % (len(vehi_info), len(obj_info), im_name) 
+            else:
+                alt_gpu(GPU_1, 1)
+                continue
 
 
