@@ -7,7 +7,7 @@ What's more, you can evaluate your yolov2 models conveniently using ./tools/test
 ## Saving detections to files in PASCASL VOC format
 * python ./tools/rfcn_all_in_one_.py
 
-## Evaluating models and get mAP and recall 
+## Evaluating models: get mAP and recall 
 * change the path to your .so lib in lib/fast_rcnn/test_net.py 
-and then
+after that
 * python ./tools/test_net [see arg_parse()] --type yolo/rfcn 
