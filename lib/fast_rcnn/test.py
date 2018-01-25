@@ -18,7 +18,9 @@ import cPickle
 from utils.blob import im_list_to_blob
 import os
 
+##############################################################
 lib = CDLL("/home/ghma/py-R-FCN/libdarknet_for_eval.so", RTLD_GLOBAL)
+##############################################################
 
 class BOX(Structure):
     _fields_ = [("x", c_float),
