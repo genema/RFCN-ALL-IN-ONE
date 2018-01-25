@@ -3,6 +3,7 @@
 # Copyright (c) 2015 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ross Girshick
+# Last modified ghma
 # --------------------------------------------------------
 
 import os
@@ -36,10 +37,11 @@ class pascal_voc(imdb):
                          'sheep', 'sofa', 'train', 'tvmonitor')
         '''
         self._classes = ('__background__', # always index 0
-                         'blue_lic','yellow_lic','fastened_seatbelt', 'no_seatbelt', 
-                         'seatbelt_unclear','call_phone', 'tissue_box', 'hanging_drop',
-                         'annual_mark')# 171206 removed class decorative_items, reserved_1
-
+                         'car_front', 'car_back', 'truck_front', 'truck_back',
+                         'bus_front', 'bus_back', 'pedestrian', 'feijidong', 'blue_lic',
+                         'yellow_lic', 'dangerous', 'fastened_seatbelt', 'no_seatbelt', 'seatbelt_unclear',
+                         'call_phone', 'tissue_box', 'hanging_drop',
+                         'annual_mark', 'decorative_items', 'reserved_1')
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
         self._image_ext = '.jpg'
         self._image_index = self._load_image_set_index()
@@ -212,13 +214,10 @@ class pascal_voc(imdb):
         for ix, obj in enumerate(objs):
             bbox = obj.find('bndbox')
             # Make pixel indexes 0-based
-            x1 = float(bbox.find('xmin').text)# - 1
-            y1 = float(bbox.find('ymin').text)# - 1
-            x2 = float(bbox.find('xmax').text)# - 1
-            y2 = float(bbox.find('ymax').text)# - 1
-            # 171206 modified 
-            if obj.find('name').text.lower().strip() in ['bus_front', 'decorative_items', 'reserved_1']:
-                continue
+            x1 = float(bbox.find('xmin').text) - 1
+            y1 = float(bbox.find('ymin').text) - 1
+            x2 = float(bbox.find('xmax').text) - 1
+            y2 = float(bbox.find('ymax').text) - 1
             cls = self._class_to_ind[obj.find('name').text.lower().strip()]
             boxes[ix, :] = [x1, y1, x2, y2]
             gt_classes[ix] = cls
@@ -286,6 +285,7 @@ class pascal_voc(imdb):
         print 'VOC07 metric? ' + ('Yes' if use_07_metric else 'No')
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
+        print('~~~~~~~')
         for i, cls in enumerate(self._classes):
             if cls == '__background__':
                 continue
@@ -294,23 +294,17 @@ class pascal_voc(imdb):
                 filename, annopath, imagesetfile, cls, cachedir, ovthresh=0.5,
                 use_07_metric=use_07_metric)
             aps += [ap]
-            print('AP for {} = {:.4f}'.format(cls, ap))
+            print('{:20} AP = {:.3f} RECALL = {:.3f}'.format(cls, ap, prec[-1]))
             with open(os.path.join(output_dir, cls + '_pr.pkl'), 'w') as f:
                 cPickle.dump({'rec': rec, 'prec': prec, 'ap': ap}, f)
-        print('Mean AP = {:.4f}'.format(np.mean(aps)))
+        print('Mean AP = {:.3f}'.format(np.mean(aps)))
         print('~~~~~~~~')
         print('Results:')
         for ap in aps:
             print('{:.3f}'.format(ap))
         print('{:.3f}'.format(np.mean(aps)))
         print('~~~~~~~~')
-        print('')
-        print('--------------------------------------------------------------')
-        print('Results computed with the **unofficial** Python eval code.')
-        print('Results should be very close to the official MATLAB eval code.')
-        print('Recompute with `./tools/reval.py --matlab ...` for your paper.')
-        print('-- Thanks, The Management')
-        print('--------------------------------------------------------------')
+
 
     def _do_matlab_eval(self, output_dir='output'):
         print '-----------------------------------------------------'
