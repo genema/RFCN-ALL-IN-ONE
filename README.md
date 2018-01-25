@@ -9,5 +9,6 @@ What's more, you can evaluate your yolov2 models conveniently using ./tools/test
 
 ## Evaluating models: get mAP and recall 
 * change the path to your .so lib in lib/fast_rcnn/test_net.py 
+
 after that
 * python ./tools/test_net [see arg_parse()] --type yolo/rfcn 
