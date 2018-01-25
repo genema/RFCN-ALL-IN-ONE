@@ -13,7 +13,7 @@
 # To evaluate your yolo model:
 # python tools/test_net.py --cfg_path /path/to/your/yolov2/model/config/file/*.cfg 
 #                          --meta_path /path/to/your/yolov2/model/class/info/files/*.data
-#                          --weight-path /path/to/your/weight/file/*.weight/or/*.backup
+#                          --weight-path /path/to/your/weight/file/*.weights/or/*.backup
 #                          --type yolo
 #
 # See parse_args() for more usages.
@@ -69,7 +69,7 @@ def parse_args():
     parser.add_argument('--type', dest='type',
                         default=None, type=str)
     parser.add_argument('--output_dir', dest='output_dir',
-                        default='output/yolov2/', type=str, help='for testting yolov2'))
+                        default='output/yolov2/', type=str, help='for testting yolov2, it is a directory for saving annotations while evaluation'))
 
 
     if len(sys.argv) == 1:
