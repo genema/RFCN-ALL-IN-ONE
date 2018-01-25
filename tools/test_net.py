@@ -5,10 +5,19 @@
 # Copyright (c) 2015 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ross Girshick
+# Last Modified GhMa
 # --------------------------------------------------------
-
-"""Test a Fast R-CNN network on an image database."""
-
+# Test a Fast R-CNN network on an image database.
+# USAGE
+#
+# To evaluate your yolo model:
+# python tools/test_net.py --cfg_path /path/to/your/yolov2/model/config/file/*.cfg 
+#                          --meta_path /path/to/your/yolov2/model/class/info/files/*.data
+#                          --weight-path /path/to/your/weight/file/*.weight/or/*.backup
+#                          --type yolo
+#
+# See parse_args() for more usages.
+#
 import _init_paths
 from fast_rcnn.test import test_net, test_yolov2
 from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list
@@ -52,15 +61,15 @@ def parse_args():
     parser.add_argument('--rpn_file', dest='rpn_file',
                         default=None, type=str)
     parser.add_argument('--cfg_path', dest='cfg_path', 
-                        default=None, type=str)
+                        default=None, type=str, help='for testting yolov2')
     parser.add_argument('--meta_path', dest='meta_path', 
-                        default=None, type=str)
+                        default=None, type=str, help='for testting yolov2'))
     parser.add_argument('--weight_path', dest='weight_path', 
-                        default=None, type=str)
+                        default=None, type=str, help='for testting yolov2'))
     parser.add_argument('--type', dest='type',
                         default=None, type=str)
     parser.add_argument('--output_dir', dest='output_dir',
-                        default='output/yolov2/', type=str)
+                        default='output/yolov2/', type=str, help='for testting yolov2'))
 
 
     if len(sys.argv) == 1:
