@@ -8,7 +8,9 @@ What's more, you can evaluate your yolov2 models conveniently using ./tools/test
 * python ./tools/rfcn_all_in_one_.py
 
 ## Evaluating models: get mAP and recall 
-* change the path to your .so lib in lib/fast_rcnn/test_net.py 
+* change the path to .so lib in lib/fast_rcnn/test_net.py 
+
+You can compile your own shared lib or use my lib.It was compiled with cuda8,cudnn5,arch61.It have been tested using Titan Xp， 1080 Ti and 1070.
 
 after that
 * python ./tools/test_net [see arg_parse()] --type yolo/rfcn 
