@@ -25,9 +25,9 @@ FONT = './lib/simhei.ttf'
 FONT_SIZE = 35
 LINE_WIDTH = 6
 SKIP_PIX_THRESH = 400
-GPU_1=1
-GPU_2=2
-IMG_PATH = './test/'
+GPU_1=2
+GPU_2=1
+IMG_PATH = './test_unclear/'
 RESULTS_PATH = './results/'
 
 
@@ -89,7 +89,8 @@ def vis_detections2(im, class_name, dets, image_name, results, temp, thresh, t_c
     for i in inds:
         bbox = dets[i, :4]
         score = dets[i, -1]
-        if class_name in ('call_phone', 'no_seatbelt', 'tissue_box', 'hanging_drop'):
+        #if class_name in ('call_phone', 'no_seatbelt', 'tissue_box', 'hanging_drop'):
+	if class_name in ('seatbelt_unclear'):
             temp.append([CLASSES_2.index(class_name), score,
                         bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1]])
 
@@ -266,7 +267,7 @@ if __name__ == '__main__':
     #im_names = ['000001.jpg', '000002.jpg']
     print ' >> A total of %d images' % len(im_names)
     im_count = 0
-    for im_name in im_names:
+    for im_name in im_names[138591:]:
         chk = cv2.imread(IMG_PATH + im_name)
         if not chk is None:
             for i in xrange(2):

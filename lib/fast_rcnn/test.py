@@ -1,12 +1,11 @@
-# --------------------------------------------------------
-# Fast R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick
-# --------------------------------------------------------
+# -*- coding: utf-8 -*-
+# @Author: gehuama
+# @Date:   2018-01-18 11:44:40
+# @Last Modified by:   gehuama
+# @Last Modified time: 2018-01-19 15:47:18
 
-"""Test a Fast R-CNN network on an imdb (image database)."""
 
+from ctypes import *
 from fast_rcnn.config import cfg, get_output_dir
 from fast_rcnn.bbox_transform import clip_boxes, bbox_transform_inv
 import argparse
@@ -18,6 +17,117 @@ from fast_rcnn.nms_wrapper import nms
 import cPickle
 from utils.blob import im_list_to_blob
 import os
+
+##############################################################
+lib = CDLL("/home/ghma/py-R-FCN/libdarknet_for_eval.so", RTLD_GLOBAL)
+##############################################################
+
+class BOX(Structure):
+    _fields_ = [("x", c_float),
+                ("y", c_float),
+                ("w", c_float),
+                ("h", c_float)]
+
+
+class IMAGE(Structure):
+    _fields_ = [("w", c_int),
+                ("h", c_int),
+                ("c", c_int),
+                ("data", POINTER(c_float))]
+
+
+class METADATA(Structure):
+    _fields_ = [("classes", c_int),
+                ("names", POINTER(c_char_p))]
+
+
+lib.network_width.argtypes  = [c_void_p]
+lib.network_width.restype   = c_int
+lib.network_height.argtypes = [c_void_p]
+lib.network_height.restype  = c_int
+set_gpu                     = lib.cuda_set_device
+set_gpu.argtypes            = [c_int]
+make_boxes                  = lib.make_boxes
+make_boxes.argtypes         = [c_void_p]
+make_boxes.restype          = POINTER(BOX)
+free_ptrs                   = lib.free_ptrs
+free_ptrs.argtypes          = [POINTER(c_void_p), c_int]
+num_boxes                   = lib.num_boxes
+num_boxes.argtypes          = [c_void_p]
+num_boxes.restype           = c_int
+make_probs                  = lib.make_probs
+make_probs.argtypes         = [c_void_p]
+make_probs.restype          = POINTER(POINTER(c_float))
+detect                      = lib.network_predict
+detect.argtypes             = [c_void_p, IMAGE, c_float, c_float, c_float, POINTER(BOX), POINTER(POINTER(c_float))]
+load_net                    = lib.load_network
+load_net.argtypes           = [c_char_p, c_char_p, c_int]
+load_net.restype            = c_void_p
+free_image                  = lib.free_image
+free_image.argtypes         = [IMAGE]
+load_meta                   = lib.get_metadata
+lib.get_metadata.argtypes   = [c_char_p]
+lib.get_metadata.restype    = METADATA
+load_image                  = lib.load_image_color
+load_image.argtypes         = [c_char_p, c_int, c_int]
+load_image.restype          = IMAGE
+network_detect              = lib.network_detect
+network_detect.argtypes     = [c_void_p, IMAGE, c_float, c_float, c_float, POINTER(BOX), POINTER(POINTER(c_float))]
+
+
+def sample(probs):
+    s = sum(probs)
+    probs = [a/s for a in probs]
+    r = random.uniform(0, 1)
+    for i in range(len(probs)):
+        r = r - probs[i]
+        if r <= 0:
+            return i
+    return len(probs)-1
+
+
+def c_array(ctype, values):
+    arr = (ctype*len(values))()
+    arr[:] = values
+    return arr
+
+
+def yolov2(net, meta, image, cls_num, thresh=.1, hier_thresh=.5, nms=.45):
+    print image
+    im    = load_image(image, 0, 0)
+    boxes = make_boxes(net)
+    probs = make_probs(net)
+    num   =   num_boxes(net)
+    network_detect(net, im, thresh, hier_thresh, nms, boxes, probs)
+    s = []
+    b = []
+    for j in range(num):
+        flag    = 0
+        temp    = [0 for xx in range(4)]
+        temp[0] = boxes[j].x - 0.5*boxes[j].w
+        temp[1] = boxes[j].y - 0.5*boxes[j].h
+        temp[2] = boxes[j].w + 0.5*boxes[j].w
+        temp[3] = boxes[j].h + 0.5*boxes[j].h
+        #print temp
+        temp    = np.tile(np.array(temp), cls_num)
+        temp1 = np.zeros(cls_num)
+        for i in range(meta.classes):
+            if probs[j][i] > thresh:
+                temp1[i+1] = probs[j][i]
+                #if probs[j][i]>0.1:
+                #    print probs[j][i]
+                #print temp
+                flag = 1
+        if flag:
+            b.append(temp)
+            s.append(temp1)
+        
+    free_image(im)
+    free_ptrs(cast(probs, POINTER(c_void_p)), num)
+    #print s.shape
+    #print b.shape
+    return np.array(s), np.array(b)
+
 
 def _get_image_blob(im):
     """Converts an image into a network input.
@@ -97,6 +207,7 @@ def _project_im_rois(im_rois, scales):
 
     return rois, levels
 
+
 def _get_blobs(im, rois):
     """Convert an image and RoIs within that image into network inputs."""
     blobs = {'data' : None, 'rois' : None}
@@ -104,6 +215,7 @@ def _get_blobs(im, rois):
     if not cfg.TEST.HAS_RPN:
         blobs['rois'] = _get_rois_blob(rois, im_scale_factors)
     return blobs, im_scale_factors
+
 
 def im_detect(net, im, boxes=None):
     """Detect object classes in an image given object proposals.
@@ -183,6 +295,7 @@ def im_detect(net, im, boxes=None):
 
     return scores, pred_boxes
 
+
 def vis_detections(im, class_name, dets, thresh=0.3):
     """Visual debugging of detections."""
     import matplotlib.pyplot as plt
@@ -201,6 +314,7 @@ def vis_detections(im, class_name, dets, thresh=0.3):
                 )
             plt.title('{}  {:.3f}'.format(class_name, score))
             plt.show()
+
 
 def apply_nms(all_boxes, thresh):
     """Apply non-maximum suppression to all predicted boxes output by the
@@ -223,6 +337,7 @@ def apply_nms(all_boxes, thresh):
                 continue
             nms_boxes[cls_ind][im_ind] = dets[keep, :].copy()
     return nms_boxes
+
 
 def test_net(net, imdb, max_per_image=400, thresh=-np.inf, vis=False):
     """Test a Fast R-CNN network on an image database."""
@@ -294,5 +409,55 @@ def test_net(net, imdb, max_per_image=400, thresh=-np.inf, vis=False):
     with open(det_file, 'wb') as f:
         cPickle.dump(all_boxes, f, cPickle.HIGHEST_PROTOCOL)
 
+    print 'Evaluating detections'
+    imdb.evaluate_detections(all_boxes, output_dir)
+
+
+def test_yolov2(cfg_path, weight_path, meta_path, imdb, output_dir, max_per_image=40, thresh=0.1, vis=False):
+    """Test a Fast R-CNN network on an image database."""
+    num_images = len(imdb.image_index)
+    # all detections are collected into:
+    #    all_boxes[cls][image] = N x 5 array of detections in
+    #    (x1, y1, x2, y2, score)
+    all_boxes = [[[] for _ in xrange(num_images)]
+                 for _ in xrange(imdb.num_classes)]
+
+    net = load_net(cfg_path, weight_path, 0)
+    meta = load_meta(meta_path)
+
+    # timers
+    _t = {'im_detect' : Timer(), 'misc' : Timer()}
+    for i in xrange(num_images):
+        # filter out any ground truth boxes
+        _t['im_detect'].tic()
+        scores, boxes = yolov2(net, meta, imdb.image_path_at(i), imdb.num_classes, thresh=thresh)
+        _t['im_detect'].toc()
+        print boxes.shape
+        print scores.shape
+        _t['misc'].tic()
+        # skip j = 0, because it's the background class
+        for j in xrange(1, imdb.num_classes):
+            inds       = np.where(scores[:, j] > thresh)[0]
+            #print inds
+            cls_scores = scores[inds, j]
+            cls_boxes  = boxes[inds, 4*j:4*j+4]
+            #print cls_scores
+            #print cls_boxes
+            
+            cls_dets   = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32, copy=False)
+
+            if vis:
+                vis_detections(im, imdb.classes[j], cls_dets)
+            all_boxes[j][i] = cls_dets
+
+        _t['misc'].toc()
+        print 'im_detect: {:d}/{:d} {:.3f}s {:.3f}s' \
+              .format(i + 1, num_images, _t['im_detect'].average_time,
+                      _t['misc'].average_time)
+
+    det_file = os.path.join(output_dir, 'detections.pkl')
+    with open(det_file, 'wb') as f:
+        cPickle.dump(all_boxes, f, cPickle.HIGHEST_PROTOCOL)
+    #print all_boxes
     print 'Evaluating detections'
     imdb.evaluate_detections(all_boxes, output_dir)
