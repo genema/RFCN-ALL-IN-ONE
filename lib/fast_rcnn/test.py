@@ -106,8 +106,8 @@ def yolov2(net, meta, image, cls_num, thresh=.1, hier_thresh=.5, nms=.45):
         temp    = [0 for xx in range(4)]
         temp[0] = boxes[j].x - 0.5*boxes[j].w
         temp[1] = boxes[j].y - 0.5*boxes[j].h
-        temp[2] = boxes[j].w + 0.5*boxes[j].w
-        temp[3] = boxes[j].h + 0.5*boxes[j].h
+        temp[2] = boxes[j].x + 0.5*boxes[j].w
+        temp[3] = boxes[j].y + 0.5*boxes[j].h
         #print temp
         temp    = np.tile(np.array(temp), cls_num)
         temp1 = np.zeros(cls_num)
