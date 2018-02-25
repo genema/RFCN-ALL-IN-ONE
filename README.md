@@ -31,6 +31,6 @@ What's more, you can evaluate your yolov2 models conveniently using ./tools/test
 
 You can compile your own shared lib or use my lib.It was compiled with cuda8,cudnn5,arch61.It have been tested using Titan Xp， 1080 Ti and 1070.
 
-```python
-* python ./tools/test_net [see arg_parse()] --type yolo/rfcn 
+```shell
+ python ./tools/test_net [see arg_parse()] --type yolo/rfcn 
 ```
