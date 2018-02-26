@@ -25,9 +25,9 @@ What's more, you can evaluate your yolov2 models conveniently using ./tools/test
 
 ## Detect and save detections to files in PASCASL VOC format
 Remember to change the values of globla variables in rfcn_all_in_one_.py 
-
-* python ./tools/rfcn_all_in_one_.py
-
+'''shell
+python ./tools/rfcn_all_in_one_.py
+'''
 ## Evaluating models: get mAP and recall 
 * change the path to .so file in lib/fast_rcnn/test_net.py 
 
